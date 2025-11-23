@@ -1,56 +1,52 @@
-import requests
-from jose import jwt
-from fastapi import HTTPException, status
 from functools import lru_cache
 
-# Your Clerk JWKS URL
-JWKS_URL = "https://amazed-duck-99.clerk.accounts.dev/.well-known/jwks.json"
+import requests
+from fastapi import HTTPException, status
+from jose import jwt, JWTError  # python-jose
+
+from app.core.config import settings
 
 
-# Cache the JWKS for performance
-@lru_cache()
-def get_jwks():
-    response = requests.get(JWKS_URL)
-    if response.status_code != 200:
-        raise HTTPException(status_code=500, detail="Failed to fetch JWKS keys")
-    return response.json()
+@lru_cache
+def _get_jwks():
+    """Fetch JWKS from Clerk (cached in memory)."""
+    resp = requests.get(settings.CLERK_JWKS_URL, timeout=5)
+    resp.raise_for_status()
+    return resp.json()
 
 
-def verify_clerk_token(token: str):
+def _get_key_for_token(token: str):
+    unverified_header = jwt.get_unverified_header(token)
+    kid = unverified_header.get("kid")
+
+    jwks = _get_jwks()
+    for key in jwks.get("keys", []):
+        if key.get("kid") == kid:
+            return key
+
+    raise HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Unable to find matching JWKS key",
+    )
+
+
+def verify_clerk_token(token: str) -> dict:
     """
-    Verifies a Clerk JWT using JWKS (automatic key rotation).
+    Validate a Clerk-issued JWT and return its payload.
     """
+    key = _get_key_for_token(token)
 
-    jwks = get_jwks()
-
-    # Decode headers to find which keyId ("kid") was used
-    try:
-        header = jwt.get_unverified_header(token)
-    except Exception:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token header")
-
-    kid = header.get("kid", None)
-    if not kid:
-        raise HTTPException(status_code=401, detail="Token missing 'kid' header")
-
-    # Find matching JWKS key
-    key = None
-    for jwk in jwks["keys"]:
-        if jwk["kid"] == kid:
-            key = jwk
-            break
-
-    if not key:
-        raise HTTPException(status_code=401, detail="Matching JWKS key not found")
-
-    # Verify token using jose + JWKS key
     try:
         payload = jwt.decode(
             token,
             key,
-            algorithms=[key["alg"]],
-            options={"verify_aud": False},  # Clerk tokens don't require audience matching here
+            algorithms=["RS256"],
+            issuer=settings.CLERK_ISSUER,
+            options={"verify_aud": False},  # disable audience check for now
         )
-        return payload  # contains user["sub"]
-    except Exception as e:
-        raise HTTPException(status_code=401, detail="Invalid or expired token")
+        return payload
+    except JWTError as e:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=f"Invalid authentication credentials: {str(e)}",
+        )

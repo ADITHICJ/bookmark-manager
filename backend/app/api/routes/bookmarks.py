@@ -1,46 +1,72 @@
-from fastapi import APIRouter, Depends, HTTPException
+from typing import List
+
+from fastapi import APIRouter, Depends, HTTPException, status
 
 from app.api.deps import get_current_user
-from app.schemas.bookmark import BookmarkCreate, BookmarkUpdate
-from app.services.bookmark_service import (
-    create_bookmark,
-    list_bookmarks,
-    get_bookmark_by_id,
-    update_bookmark,
-    delete_bookmark,
-)
+from app.schemas.bookmark import Bookmark, BookmarkCreate, BookmarkUpdate
+from app.services import bookmark_service
 
-router = APIRouter(prefix="/bookmarks", tags=["Bookmarks"])
+router = APIRouter(prefix="/bookmarks", tags=["bookmarks"])
 
 
-@router.post("/")
-def create(data: BookmarkCreate, user=Depends(get_current_user)):
-    return create_bookmark(data, user["sub"])
+def _get_user_id_from_token(clerk_payload: dict) -> str:
+    # Clerk usually puts user id in `sub`
+    user_id = clerk_payload.get("sub") or clerk_payload.get("id") or clerk_payload.get("user_id")
+    if not user_id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Could not determine user_id from token",
+        )
+    return user_id
 
 
-@router.get("/")
-def get_all(user=Depends(get_current_user)):
-    return list_bookmarks(user["sub"])
+@router.get("/", response_model=List[Bookmark])
+def list_user_bookmarks(current_user=Depends(get_current_user)):
+    user_id = _get_user_id_from_token(current_user)
+    return bookmark_service.list_bookmarks(user_id)
 
 
-@router.get("/{bookmark_id}")
-def get_one(bookmark_id: int, user=Depends(get_current_user)):
-    result = get_bookmark_by_id(bookmark_id, user["sub"])
-    if not result:
+@router.post("/", response_model=Bookmark, status_code=status.HTTP_201_CREATED)
+def create_user_bookmark(
+    data: BookmarkCreate,
+    current_user=Depends(get_current_user),
+):
+    user_id = _get_user_id_from_token(current_user)
+    return bookmark_service.create_bookmark(user_id, data)
+
+
+@router.get("/{bookmark_id}", response_model=Bookmark)
+def get_user_bookmark(
+    bookmark_id: str,
+    current_user=Depends(get_current_user),
+):
+    user_id = _get_user_id_from_token(current_user)
+    bookmark = bookmark_service.get_bookmark(user_id, bookmark_id)
+    if not bookmark:
         raise HTTPException(status_code=404, detail="Bookmark not found")
-    return result
+    return bookmark
 
 
-@router.put("/{bookmark_id}")
-def update(bookmark_id: int, data: BookmarkUpdate, user=Depends(get_current_user)):
-    result = update_bookmark(bookmark_id, data, user["sub"])
-    if not result:
+@router.put("/{bookmark_id}", response_model=Bookmark)
+def update_user_bookmark(
+    bookmark_id: str,
+    data: BookmarkUpdate,
+    current_user=Depends(get_current_user),
+):
+    user_id = _get_user_id_from_token(current_user)
+    bookmark = bookmark_service.update_bookmark(user_id, bookmark_id, data)
+    if not bookmark:
         raise HTTPException(status_code=404, detail="Bookmark not found")
-    return result
+    return bookmark
 
 
-@router.delete("/{bookmark_id}")
-def remove(bookmark_id: int, user=Depends(get_current_user)):
-    if not delete_bookmark(bookmark_id, user["sub"]):
+@router.delete("/{bookmark_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_user_bookmark(
+    bookmark_id: str,
+    current_user=Depends(get_current_user),
+):
+    user_id = _get_user_id_from_token(current_user)
+    ok = bookmark_service.delete_bookmark(user_id, bookmark_id)
+    if not ok:
         raise HTTPException(status_code=404, detail="Bookmark not found")
-    return {"message": "Deleted"}
+    return

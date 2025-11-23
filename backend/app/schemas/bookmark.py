@@ -1,9 +1,13 @@
-from pydantic import BaseModel
+from datetime import datetime
+from typing import Optional
+
+from pydantic import BaseModel, HttpUrl
+
 
 class BookmarkBase(BaseModel):
     title: str
-    url: str
-    tag: str | None = None
+    url: HttpUrl
+    description: Optional[str] = None
 
 
 class BookmarkCreate(BookmarkBase):
@@ -11,14 +15,15 @@ class BookmarkCreate(BookmarkBase):
 
 
 class BookmarkUpdate(BaseModel):
-    title: str | None = None
-    url: str | None = None
-    tag: str | None = None
+    title: Optional[str] = None
+    url: Optional[HttpUrl] = None
+    description: Optional[str] = None
 
 
-class BookmarkResponse(BookmarkBase):
-    id: int
+class Bookmark(BookmarkBase):
+    id: str
     user_id: str
+    created_at: datetime
 
     class Config:
-        orm_mode = True
+        from_attributes = True
