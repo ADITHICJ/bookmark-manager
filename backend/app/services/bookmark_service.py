@@ -48,32 +48,35 @@ def get_bookmark(user_id: str, bookmark_id: str) -> Optional[dict]:
 def create_bookmark(user_id: str, data: BookmarkCreate) -> dict:
     supabase = get_supabase_client()
     payload = {
-        "user_id": user_id,
-        "title": data.title,
-        "url": str(data.url),
-        "description": data.description,
-    }
-    res = supabase.table(TABLE_NAME).insert(payload).select("*").single().execute()
-    return res.data
+    "user_id": user_id,
+    "title": data.title,
+    "url": str(data.url),           # IMPORTANT
+    "description": data.description,
+}
+
+    res = supabase.table(TABLE_NAME).insert(payload).execute()
+    return res.data[0]  # Supabase returns list of rows
 
 
 def update_bookmark(user_id: str, bookmark_id: str, data: BookmarkUpdate) -> Optional[dict]:
     supabase = get_supabase_client()
-    update_data = {k: v for k, v in data.model_dump(exclude_unset=True).items()}
+    update_data = data.model_dump(exclude_unset=True)
+    if "url" in update_data:
+        update_data["url"] = str(update_data["url"])
+
 
     if not update_data:
         return get_bookmark(user_id, bookmark_id)
 
     res = (
-        supabase.table(TABLE_NAME)
-        .update(update_data)
-        .eq("user_id", user_id)
-        .eq("id", bookmark_id)
-        .select("*")
-        .single()
-        .execute()
+    supabase.table(TABLE_NAME)
+    .update(update_data)
+    .eq("user_id", user_id)
+    .eq("id", bookmark_id)
+    .execute()
     )
-    return res.data
+
+    return res.data[0] if res.data else None
 
 
 def delete_bookmark(user_id: str, bookmark_id: str) -> bool:
