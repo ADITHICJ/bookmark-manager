@@ -5,45 +5,57 @@ import { useAuth } from "@clerk/nextjs";
 
 export default function HomePage() {
   const { getToken, isSignedIn } = useAuth();
-  const [bookmarks, setBookmarks] = useState([]);
+  const [bookmarks, setBookmarks] = useState<any[] | null>(null);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     async function loadBookmarks() {
-      if (!isSignedIn) return;
+      if (!isSignedIn) return;  // no fetch when logged out
 
-      // Get JWT from Clerk (fastapi = your template name)
+      setLoading(true);
+
       const token = await getToken({ template: "fastapi" });
+      const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
-      console.log("JWT:", token); // debug
-
-      const res = await fetch("http://127.0.0.1:8000/api/bookmarks/", {
+      const res = await fetch(`${API_URL}/api/bookmarks/`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
 
       const data = await res.json();
-      console.log("Bookmarks:", data);
       setBookmarks(data);
+      setLoading(false);
     }
 
     loadBookmarks();
   }, [isSignedIn, getToken]);
 
+  // ----------------------------
+  // UI LOGIC
+  // ----------------------------
+
+  if (!isSignedIn) {
+    return <p>Please sign in to view your bookmarks.</p>;
+  }
+
+  if (loading || bookmarks === null) {
+    return <p>Loading...</p>;
+  }
+
+  if (bookmarks.length === 0) {
+    return <p>No bookmarks found.</p>;
+  }
+
   return (
     <div>
       <h1>Your Bookmarks</h1>
-
-      {bookmarks.length === 0 ? (
-        <p>No bookmarks found.</p>
-      ) : (
-        bookmarks.map((b: any) => (
-          <div key={b.id}>
-            <h3>{b.title}</h3>
-            <p>{b.url}</p>
-          </div>
-        ))
-      )}
+      {bookmarks.map((b) => (
+        <div key={b.id}>
+          <h3>{b.title}</h3>
+          <p>{b.url}</p>
+        </div>
+      ))}
     </div>
   );
 }

@@ -4,7 +4,6 @@ import "./globals.css";
 import { ThemeProvider } from "next-themes";
 import { ClerkProvider } from "@clerk/nextjs";
 import Header from "@/components/header";
-import { dark } from "@clerk/themes";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -21,14 +20,26 @@ export default function RootLayout({
   return (
     <ClerkProvider
       appearance={{
-        theme: dark,
+        baseTheme: undefined, // remove themes
+        variables: {
+          colorPrimary: "var(--primary)",
+          colorPrimaryForeground: "var(--primary-foreground)",
+          colorBackground: "var(--card)",
+          colorText: "var(--card-foreground)",
+        },
+        elements: {
+          card: "bg-[hsl(var(--card))] text-[hsl(var(--card-foreground))]",
+          popoverBox: "bg-[hsl(var(--card))] shadow-sm border",
+          userButtonPopoverCard:
+            "bg-[hsl(var(--card))] text-[hsl(var(--card-foreground))]",
+        },
       }}
     >
       <html lang="en" suppressHydrationWarning>
         <body className={`${inter.className}`}>
           <ThemeProvider
             attribute="class"
-            defaultTheme="system"
+            defaultTheme="light"
             enableSystem
             disableTransitionOnChange
           >
