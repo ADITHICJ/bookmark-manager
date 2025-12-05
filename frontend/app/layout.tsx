@@ -4,6 +4,7 @@ import "./globals.css";
 import { ThemeProvider } from "next-themes";
 import { ClerkProvider } from "@clerk/nextjs";
 import Header from "@/components/header";
+import { AppProviders } from "@/components/Providers";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -45,7 +46,9 @@ export default function RootLayout({
           >
             {/* header */}
             <Header></Header>
-            <main className="min-h-screen">{children}</main>
+            <AppProviders>
+              <main className="min-h-screen">{children}</main>
+            </AppProviders>
             {/* footer */}
             <footer className="bg-muted/50 py-12">
               <div className="container mx-auto px-4 text-center text-gray-200">
