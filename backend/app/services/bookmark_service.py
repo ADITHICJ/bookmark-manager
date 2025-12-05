@@ -1,10 +1,11 @@
 from typing import List, Optional
-
+import uuid
+from datetime import datetime
 from app.core.supabase_client import get_supabase_client
 from app.schemas.bookmark import BookmarkCreate, BookmarkUpdate
 
 
-TABLE_NAME = "bookmarks"
+TABLE_NAME = "Bookmark"
 
 
 # Optional: SQL for your Supabase table (run once in SQL editor)
@@ -48,11 +49,13 @@ def get_bookmark(user_id: str, bookmark_id: str) -> Optional[dict]:
 def create_bookmark(user_id: str, data: BookmarkCreate) -> dict:
     supabase = get_supabase_client()
     payload = {
+    "id": str(uuid.uuid4()),
     "user_id": user_id,
     "title": data.title,
-    "url": str(data.url),           # IMPORTANT
+    "url": str(data.url),
     "description": data.description,
-}
+    "created_at": datetime.utcnow().isoformat(),   # 🔥 FIX
+    }
 
     res = supabase.table(TABLE_NAME).insert(payload).execute()
     return res.data[0]  # Supabase returns list of rows

@@ -1,0 +1,6 @@
+{
+  "devDependencies": {
+    "prisma": "^7.1.0",
+    "supabase": "^2.65.6"
+  }
+}

@@ -14,5 +14,6 @@ def get_current_user(
     and returns the Clerk JWT payload.
     """
     token = credentials.credentials
+    print(token)
     payload = verify_clerk_token(token)
     return payload
