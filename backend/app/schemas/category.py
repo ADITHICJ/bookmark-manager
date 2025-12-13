@@ -11,7 +11,7 @@ class CategoryCreate(CategoryBase):
 
 
 class Category(CategoryBase):
-    category_id: str
+    id: str
     user_id: str
     created_at: datetime
 

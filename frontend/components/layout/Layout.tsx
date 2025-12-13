@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import Header from "../header";
 import { Sidebar } from "./Sidebar";
-import { Menu } from "lucide-react";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -15,24 +15,19 @@ export function Layout({ children }: LayoutProps) {
 
   return (
     <div className="min-h-screen bg-background">
+      {/* Header */}
+      <Header toggleSidebar={toggleSidebar} />
+
       {/* Sidebar */}
       <Sidebar isOpen={isOpen} toggleSidebar={toggleSidebar} />
 
-      {/* Toggle Button */}
-      <button
-        onClick={toggleSidebar}
-        className="fixed top-4 left-4 lg:left-72 z-50 p-2 rounded-md bg-primary text-primary-foreground shadow hover:opacity-90 transition lg:hidden"
-      >
-        <Menu className="w-6 h-6" />
-      </button>
-
-      {/* Main Content shifts based on sidebar */}
+      {/* Main Content */}
       <main
-        className={`transition-all duration-300 p-8 ${
+        className={`pt-20 transition-all duration-300 ${
           isOpen ? "lg:ml-64" : "ml-0"
         }`}
       >
-        <div className="max-w-5xl mx-auto">{children}</div>
+        <div className="max-w-5xl mx-auto px-6">{children}</div>
       </main>
     </div>
   );

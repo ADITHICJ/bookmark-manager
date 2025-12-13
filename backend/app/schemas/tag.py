@@ -2,7 +2,8 @@ from pydantic import BaseModel
 
 
 class TagBase(BaseModel):
-    tag_name: str
+    name: str
+    color: str
 
 
 class TagCreate(TagBase):
@@ -10,7 +11,7 @@ class TagCreate(TagBase):
 
 
 class Tag(TagBase):
-    tag_id: str
+    id: str
     user_id: str
 
     class Config:

@@ -24,25 +24,27 @@ export function Sidebar({
   return (
     <aside
       className={cn(
-        "fixed top-0 left-0 h-screen bg-card border-r border-border p-6 flex flex-col shadow-lg transition-all duration-300",
-        isOpen ? "w-64" : "w-0 overflow-hidden"
+        "fixed top-16 left-0 h-[calc(100vh-4rem)] w-64 bg-card border-r border-border p-6 shadow-lg z-30 transition-transform duration-300",
+        isOpen ? "translate-x-0" : "-translate-x-full"
       )}
     >
-      {/* Close button (mobile) */}
+      {/* Mobile close */}
       <button
         onClick={toggleSidebar}
-        className="lg:hidden absolute top-4 right-4 p-2 rounded-md bg-muted text-muted-foreground hover:bg-accent transition"
+        className="lg:hidden absolute top-4 right-4 p-2 rounded-md bg-muted hover:bg-accent transition"
       >
         <X className="w-5 h-5" />
       </button>
 
+      {/* Logo */}
       <div className="flex items-center gap-3 mb-10">
         <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center">
           <Bookmark className="w-5 h-5 text-primary-foreground" />
         </div>
-        <span className="text-xl font-semibold text-foreground">Markly</span>
+        <span className="text-xl font-semibold">Markly</span>
       </div>
 
+      {/* Nav */}
       <nav className="flex-1 space-y-2">
         {navItems.map((item) => {
           const Icon = item.icon;
@@ -53,11 +55,10 @@ export function Sidebar({
               key={item.path}
               href={item.path}
               className={cn(
-                "flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200",
-                "hover:bg-accent hover:text-accent-foreground",
+                "flex items-center gap-3 px-4 py-3 rounded-lg transition",
                 isActive
                   ? "bg-primary text-primary-foreground shadow-md"
-                  : "text-muted-foreground"
+                  : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
               )}
             >
               <Icon className="w-5 h-5" />

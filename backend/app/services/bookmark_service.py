@@ -7,20 +7,6 @@ from app.schemas.bookmark import BookmarkCreate, BookmarkUpdate
 
 TABLE_NAME = "Bookmark"
 
-
-# Optional: SQL for your Supabase table (run once in SQL editor)
-"""
-create table if not exists public.bookmarks (
-  id uuid primary key default gen_random_uuid(),
-  user_id text not null,
-  title text not null,
-  url text not null,
-  description text,
-  created_at timestamptz not null default now()
-);
-"""
-
-
 def list_bookmarks(user_id: str) -> List[dict]:
     supabase = get_supabase_client()
     res = (
