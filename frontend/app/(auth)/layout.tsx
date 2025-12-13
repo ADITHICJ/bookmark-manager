@@ -1,4 +1,6 @@
+"use client";
 import React from 'react'
+import AuthTokenLogger from '@/components/AuthTokenLogger'
 
 type Props = {
   children: React.ReactNode
@@ -6,7 +8,10 @@ type Props = {
 
 const AuthLayout = ({children}: Props) => {
   return (
-    <div className="flex justify-center pt-10">{children}</div>
+    <div className="flex justify-center pt-10">
+      <AuthTokenLogger />
+      {children}
+    </div>
   )
 }
 

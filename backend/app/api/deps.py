@@ -13,6 +13,8 @@ def get_current_user(
     and returns the Clerk JWT payload.
     """
     token = credentials.credentials
-    print(token)
+    # Print the bearer token to console for debugging purposes
+    # Note: Avoid logging tokens in production environments.
+    print(f"Authorization Bearer token: {token}")
     payload = verify_clerk_token(token)
     return payload

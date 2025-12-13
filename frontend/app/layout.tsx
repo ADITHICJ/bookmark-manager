@@ -4,6 +4,7 @@ import "./globals.css";
 import { ThemeProvider } from "next-themes";
 import { ClerkProvider } from "@clerk/nextjs";
 import Header from "@/components/header";
+import AuthTokenLogger from "@/components/AuthTokenLogger";
 import { AppProviders } from "@/components/Providers";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -47,6 +48,7 @@ export default function RootLayout({
             {/* header */}
             <Header></Header>
             <AppProviders>
+              <AuthTokenLogger />
               <main className="min-h-screen">{children}</main>
             </AppProviders>
             {/* footer */}
