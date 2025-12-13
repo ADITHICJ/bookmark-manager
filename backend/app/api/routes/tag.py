@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, status
 from typing import List
 
 from app.api.deps import get_current_user
@@ -8,22 +8,32 @@ from app.services import tag_service
 router = APIRouter(prefix="/tags", tags=["tags"])
 
 
-def _uid(u): return u.get("sub") or u.get("id")
+def _get_user_id(user: dict) -> str:
+    uid = user.get("sub") or user.get("id")
+    if not uid:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid user token",
+        )
+    return uid
 
 
 @router.get("/", response_model=List[Tag])
 def list_tags(current=Depends(get_current_user)):
-    return tag_service.list_tags(_uid(current))
+    return tag_service.list_tags(_get_user_id(current))
 
 
-@router.post("/", response_model=Tag, status_code=201)
+@router.post("/", response_model=Tag, status_code=status.HTTP_201_CREATED)
 def create_tag(data: TagCreate, current=Depends(get_current_user)):
-    return tag_service.create_tag(_uid(current), data)
+    return tag_service.create_tag(_get_user_id(current), data)
 
 
-@router.delete("/{tag_id}", status_code=204)
+@router.delete("/{tag_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_tag(tag_id: str, current=Depends(get_current_user)):
-    ok = tag_service.delete_tag(_uid(current), tag_id)
+    ok = tag_service.delete_tag(_get_user_id(current), tag_id)
     if not ok:
-        raise HTTPException(404, "Tag not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Tag not found",
+        )
     return

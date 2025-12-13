@@ -5,7 +5,6 @@ from app.core.clerk import verify_clerk_token
 
 auth_scheme = HTTPBearer(auto_error=True)
 
-
 def get_current_user(
     credentials: HTTPAuthorizationCredentials = Depends(auth_scheme),
 ) -> dict:

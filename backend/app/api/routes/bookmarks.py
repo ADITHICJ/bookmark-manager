@@ -1,5 +1,4 @@
 from typing import List
-
 from fastapi import APIRouter, Depends, HTTPException, status
 
 from app.api.deps import get_current_user
@@ -10,8 +9,11 @@ router = APIRouter(prefix="/bookmarks", tags=["bookmarks"])
 
 
 def _get_user_id_from_token(clerk_payload: dict) -> str:
-    # Clerk usually puts user id in `sub`
-    user_id = clerk_payload.get("sub") or clerk_payload.get("id") or clerk_payload.get("user_id")
+    user_id = (
+        clerk_payload.get("sub")
+        or clerk_payload.get("id")
+        or clerk_payload.get("user_id")
+    )
     if not user_id:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -66,7 +68,5 @@ def delete_user_bookmark(
     current_user=Depends(get_current_user),
 ):
     user_id = _get_user_id_from_token(current_user)
-    ok = bookmark_service.delete_bookmark(user_id, bookmark_id)
-    if not ok:
-        raise HTTPException(status_code=404, detail="Bookmark not found")
+    bookmark_service.delete_bookmark(user_id, bookmark_id)
     return

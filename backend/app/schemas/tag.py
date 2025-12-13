@@ -1,3 +1,4 @@
+from datetime import datetime
 from pydantic import BaseModel
 
 
@@ -13,6 +14,7 @@ class TagCreate(TagBase):
 class Tag(TagBase):
     id: str
     user_id: str
+    created_at: datetime
 
     class Config:
         from_attributes = True

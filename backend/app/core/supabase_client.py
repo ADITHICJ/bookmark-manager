@@ -6,7 +6,6 @@ from app.core.config import settings
 
 _supabase_client: Optional[Client] = None
 
-
 def get_supabase_client() -> Client:
     global _supabase_client
 

@@ -30,6 +30,7 @@ class Bookmark(BookmarkBase):
     id: str
     user_id: str
     created_at: datetime
+    tag_ids: List[str] = []
 
     class Config:
         from_attributes = True

@@ -2,65 +2,120 @@ from typing import List
 from app.core.supabase_client import get_supabase_client
 from app.schemas.bookmark_tag import BookmarkTagCreate
 
-TABLE = "bookmark_tag"
+BOOKMARK_TABLE = "bookmarks"
+TAG_TABLE = "tags"
+BOOKMARK_TAG_TABLE = "bookmark_tags"
 
 
 def add_tag_to_bookmark(user_id: str, data: BookmarkTagCreate) -> dict:
     supabase = get_supabase_client()
 
-    # Verify user owns the bookmark
+    # Verify bookmark ownership
     bm = (
-        supabase.table("Bookmark")
-        .select("*")
+        supabase.table(BOOKMARK_TABLE)
+        .select("id")
         .eq("id", data.bookmark_id)
         .eq("user_id", user_id)
         .single()
         .execute()
     )
-    if bm is None or bm.data is None:
-        raise Exception("Bookmark not found")
+    if not bm.data:
+        raise ValueError("Bookmark not found")
 
-    # Verify user owns the tag
+    # Verify tag ownership
     tg = (
-        supabase.table("Tag")
-        .select("*")
-        .eq("tag_id", data.tag_id)
+        supabase.table(TAG_TABLE)
+        .select("id")
+        .eq("id", data.tag_id)
         .eq("user_id", user_id)
-        .maybe_single()
+        .single()
         .execute()
     )
-    if tg is None or tg.data is None:
-        raise Exception("Tag not found")
+    if not tg.data:
+        raise ValueError("Tag not found")
 
-    res = supabase.table(TABLE).insert(data.model_dump()).execute()
+    # Insert mapping
+    res = (
+        supabase.table(BOOKMARK_TAG_TABLE)
+        .insert({
+            "bookmark_id": data.bookmark_id,
+            "tag_id": data.tag_id
+        })
+        .execute()
+    )
+
     return res.data[0]
 
 
 def remove_tag_from_bookmark(user_id: str, bookmark_id: str, tag_id: str) -> bool:
     supabase = get_supabase_client()
-    supabase.table(TABLE).delete().eq("bookmark_id", bookmark_id).eq("tag_id", tag_id).execute()
+
+    # Verify bookmark ownership
+    bm = (
+        supabase.table(BOOKMARK_TABLE)
+        .select("id")
+        .eq("id", bookmark_id)
+        .eq("user_id", user_id)
+        .single()
+        .execute()
+    )
+    if not bm.data:
+        raise ValueError("Bookmark not found")
+
+    supabase.table(BOOKMARK_TAG_TABLE) \
+        .delete() \
+        .eq("bookmark_id", bookmark_id) \
+        .eq("tag_id", tag_id) \
+        .execute()
+
     return True
 
 
 def list_tags_for_bookmark(user_id: str, bookmark_id: str) -> List[dict]:
     supabase = get_supabase_client()
-    return (
-        supabase.table("bookmark_tag")
-        .select("*, Tag(*)")
+
+    # Verify bookmark ownership
+    bm = (
+        supabase.table(BOOKMARK_TABLE)
+        .select("id")
+        .eq("id", bookmark_id)
+        .eq("user_id", user_id)
+        .single()
+        .execute()
+    )
+    if not bm.data:
+        raise ValueError("Bookmark not found")
+
+    res = (
+        supabase.table(BOOKMARK_TAG_TABLE)
+        .select("tags(*)")
         .eq("bookmark_id", bookmark_id)
         .execute()
-        .data
-        or []
     )
+
+    return res.data or []
 
 
 def list_bookmarks_for_tag(user_id: str, tag_id: str) -> List[dict]:
     supabase = get_supabase_client()
-    return (
-        supabase.table(TABLE)
-        .select("Bookmark:Bookmark(*)")
+
+    # Verify tag ownership
+    tg = (
+        supabase.table(TAG_TABLE)
+        .select("id")
+        .eq("id", tag_id)
+        .eq("user_id", user_id)
+        .single()
+        .execute()
+    )
+    if not tg.data:
+        raise ValueError("Tag not found")
+
+    res = (
+        supabase.table(BOOKMARK_TAG_TABLE)
+        .select("bookmarks(*)")
         .eq("tag_id", tag_id)
         .execute()
-        .data
-        or []
     )
+
+    return res.data or []
